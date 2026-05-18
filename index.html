@@ -307,21 +307,26 @@
         }
 
         function extractFinalColumn(text) {
-            const values = [];
-            
-            // Patrón para encontrar las líneas de productos con la estructura:
-            // $ precio surtidor inicial FINAL manual lts importe
-            const pattern = /\$\s*[\d,\.]+\s+\d+\s+\w+\s+([\d,\.]+)\s+([\d,\.]+)\s+[\d,\.]+\s+[\d,\.]+\s+[\d,\.]+/g;
-            
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                // El segundo grupo captura es el valor "Final"
-                const finalValue = match[2];
-                values.push(finalValue);
-            }
-
-            return values;
+    const values = [];
+    
+    // Un patrón más flexible: Busca el identificador del surtidor (ej: "1b", "2a", "35", "38")
+    // y luego captura los dos bloques de números con decimales que le siguen (Inicial y Final).
+    const pattern = /(?:[0-9]{2}\s+)?[0-9]{1,2}[a-d]?\s+([\d.,]+)\s+([\d.,]+)/g;
+    
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+        const inicial = match[1];
+        const finalValue = match[2];
+        
+        // Validación de seguridad: el valor Final suele ser igual o mayor al Inicial
+        // Evitamos capturar accidentalmente textos que no correspondan a la tabla
+        if (finalValue && finalValue.includes(',')) {
+            values.push(finalValue);
         }
+    }
+
+    return values;
+}
 
         function displayResults(values) {
             output.textContent = values.join('\n');
