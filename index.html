@@ -306,22 +306,38 @@
             }
         }
 
-        function extractFinalColumn(text) {
+function extractFinalColumn(text) {
     const values = [];
     
-    // Un patrón más flexible: Busca el identificador del surtidor (ej: "1b", "2a", "35", "38")
-    // y luego captura los dos bloques de números con decimales que le siguen (Inicial y Final).
-    const pattern = /(?:[0-9]{2}\s+)?[0-9]{1,2}[a-d]?\s+([\d.,]+)\s+([\d.,]+)/g;
+    // Separamos el texto completo en líneas individuales para no arrastrar basura de otras filas
+    const lines = text.split('\n');
     
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-        const inicial = match[1];
-        const finalValue = match[2];
+    // Expresión regular para capturar la estructura de lecturas: 
+    // Identificador de surtidor/boca -> Espacio -> Valor Inicial -> Espacio -> Valor Final
+    // Ejemplo: "1b 155885,91 155885,91" o "35 179486,70 179539,18"
+    const rowPattern = /(?:\b\d{2}\b|\b\d[a-d]\b|\b\d{2}\s+[a-d]\b)\s+([\d.,]+)\s+([\d.,]+)/;
+
+    for (let line of lines) {
+        // Limpiamos espacios extras al inicio y final de la línea
+        line = line.trim();
         
-        // Validación de seguridad: el valor Final suele ser igual o mayor al Inicial
-        // Evitamos capturar accidentalmente textos que no correspondan a la tabla
-        if (finalValue && finalValue.includes(',')) {
-            values.push(finalValue);
+        // Saltamos líneas que pertenezcan a los encabezados o totales
+        if (line.includes("TOTAL") || line.includes("Producto") || line.includes("SURTIDORES")) {
+            continue;
+        }
+
+        const match = rowPattern.exec(line);
+        if (match) {
+            const inicial = match[1];
+            const finalValue = match[2];
+
+            // Verificamos que ambos bloques capturados sean números válidos con decimales (con coma)
+            if (inicial.includes(',') && finalValue.includes(',')) {
+                // Filtro de seguridad: evita capturar residuos si el string del "final" es idéntico a un entero corto
+                if (finalValue.length >= 4) {
+                    values.push(finalValue);
+                }
+            }
         }
     }
 
