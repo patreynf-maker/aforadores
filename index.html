@@ -306,43 +306,22 @@
             }
         }
 
-function extractFinalColumn(text) {
-    const values = [];
-    
-    // 1. Buscamos la sección exacta de los surtidores para no arrastrar basura del resto del PDF
-    const startIdx = text.indexOf("01-DETALLE DE SURTIDORES");
-    const endIdx = text.indexOf("TOTAL A RENDIR");
-    
-    if (startIdx === -1) return values; // Si no encuentra la tabla, sale
-    
-    // Recortamos solo el texto de la tabla de surtidores
-    const tableText = endIdx !== -1 ? text.substring(startIdx, endIdx) : text.substring(startIdx);
+        function extractFinalColumn(text) {
+            const values = [];
+            
+            // Patrón para encontrar las líneas de productos con la estructura:
+            // $ precio surtidor inicial FINAL manual lts importe
+            const pattern = /\$\s*[\d,\.]+\s+\d+\s+\w+\s+([\d,\.]+)\s+([\d,\.]+)\s+[\d,\.]+\s+[\d,\.]+\s+[\d,\.]+/g;
+            
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                // El segundo grupo captura es el valor "Final"
+                const finalValue = match[2];
+                values.push(finalValue);
+            }
 
-    // 2. Regex para capturar números con coma (ej: 155885,91 o 0,00)
-    // Ignoramos números con 4 decimales fijos como "2045,0000" (precios)
-    const numberPattern = /\b\d+,\d{2}\b/g;
-    
-    const allNumbers = tableText.match(numberPattern);
-    if (!allNumbers) return values;
-
-    // 3. Procesamos los números de 6 en 6 (las 6 columnas de datos de cada fila de surtidor)
-    // Estructura: Inicial (0), Final (1), Manual (2), Lts/m (3), Importe (4,5)
-    let i = 0;
-    while (i < allNumbers.length) {
-        // Monitoreamos si encontramos un par Inicial y Final válido
-        const inicial = allNumbers[i];
-        const finalValue = allNumbers[i + 1];
-
-        if (inicial && finalValue) {
-            values.push(finalValue);
+            return values;
         }
-        
-        // Avanzamos 6 posiciones para ir al siguiente surtidor
-        i += 6;
-    }
-
-    return values;
-}
 
         function displayResults(values) {
             output.textContent = values.join('\n');
