@@ -283,15 +283,14 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 
-                let fullText = '';
+                let allItems = [];
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
+                    allItems = allItems.concat(textContent.items);
                 }
 
-                const finalValues = extractFinalColumn(fullText);
+                const finalValues = extractFinalColumn(allItems);
                 
                 if (finalValues.length === 0) {
                     showError('No se encontraron valores en la columna "Final". Verifica que el PDF tenga el formato esperado.');
@@ -306,21 +305,61 @@
             }
         }
 
-        function extractFinalColumn(text) {
+        function extractFinalColumn(items) {
             const values = [];
             
-            // Patrón para encontrar las líneas de productos con la estructura:
-            // $ precio surtidor inicial FINAL manual lts importe
-            const pattern = /\$\s*[\d,\.]+\s+\d+\s+\w+\s+([\d,\.]+)\s+([\d,\.]+)\s+[\d,\.]+\s+[\d,\.]+\s+[\d,\.]+/g;
+            // Reconstruir el texto respetando las posiciones
+            let currentLine = [];
+            let lastY = null;
             
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                // El segundo grupo captura es el valor "Final"
-                const finalValue = match[2];
-                values.push(finalValue);
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const text = item.str.trim();
+                
+                // Si cambió la coordenada Y, es una nueva línea
+                if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) {
+                    processLine(currentLine, values);
+                    currentLine = [];
+                }
+                
+                if (text) {
+                    currentLine.push(text);
+                }
+                lastY = item.transform[5];
+            }
+            
+            // Procesar la última línea
+            if (currentLine.length > 0) {
+                processLine(currentLine, values);
             }
 
             return values;
+        }
+        
+        function processLine(tokens, values) {
+            // Buscar líneas que empiezan con $
+            if (tokens.length > 0 && tokens[0].startsWith('$')) {
+                // Extraer todos los números de los tokens
+                const numbers = [];
+                for (let token of tokens) {
+                    // Buscar números con formato xxx,xxx.xx o xxx.xx
+                    const matches = token.match(/\d+[\d,\.]*\d+|\d+/g);
+                    if (matches) {
+                        numbers.push(...matches);
+                    }
+                }
+                
+                // Necesitamos al menos 7 números: precio, surtidor, inicial, FINAL, manual, lts, importe
+                if (numbers.length >= 7) {
+                    // El valor "Final" está en la posición 3 (índice 3)
+                    const finalValue = numbers[3];
+                    
+                    // Validar que tenga formato de número con decimales (contiene coma o punto)
+                    if (finalValue && (finalValue.includes(',') || finalValue.includes('.'))) {
+                        values.push(finalValue);
+                    }
+                }
+            }
         }
 
         function displayResults(values) {
