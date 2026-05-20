@@ -17,24 +17,41 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .container {
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .left-panel {
+            flex: 1;
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
-            width: 100%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
         }
 
-        h1 {
+        h1, h2 {
             color: #333;
             margin-bottom: 10px;
             font-size: 28px;
+        }
+
+        h2 {
+            font-size: 24px;
         }
 
         .subtitle {
@@ -43,6 +60,118 @@
             font-size: 14px;
         }
 
+        /* Estilos de la tabla de surtidores */
+        .table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .surtidor-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .surtidor-table thead {
+            background: #667eea;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .surtidor-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .surtidor-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .surtidor-table tbody tr:hover {
+            background: #e9ecef;
+        }
+
+        .surtidor-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .surtidor-table td:first-child {
+            font-weight: 600;
+            color: #495057;
+            font-family: 'Courier New', monospace;
+        }
+
+        .surtidor-table input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .surtidor-table input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-copy, .btn-clear, .btn-order {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .btn-clear {
+            background: #dc3545;
+        }
+
+        .btn-order {
+            background: #28a745;
+        }
+
+        .btn-copy:hover, .btn-order:hover {
+            background: #764ba2;
+            transform: translateY(-1px);
+        }
+
+        .btn-order:hover {
+            background: #218838;
+        }
+
+        .btn-clear:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-copy:active, .btn-clear:active, .btn-order:active {
+            transform: translateY(0);
+        }
+
+        .btn-copy.copied {
+            background: #10b981;
+        }
+
+        /* Estilos del extractor de PDF */
         .upload-area {
             border: 3px dashed #667eea;
             border-radius: 12px;
@@ -105,31 +234,6 @@
             color: #333;
         }
 
-        .btn-copy {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .btn-copy:hover {
-            background: #764ba2;
-            transform: translateY(-1px);
-        }
-
-        .btn-copy:active {
-            transform: translateY(0);
-        }
-
-        .btn-copy.copied {
-            background: #10b981;
-        }
-
         .output-box {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -189,41 +293,85 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Extractor de Columna Final</h1>
-        <p class="subtitle">Extrae los valores de la columna "Final" de planillas YPF</p>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📄</div>
-            <div class="upload-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
-            <div class="upload-hint">Soporta archivos PDF de planillas de playa</div>
-        </div>
-
-        <input type="file" id="fileInput" accept=".pdf">
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div>Procesando archivo...</div>
-        </div>
-
-        <div class="error" id="error"></div>
-
-        <div class="results" id="results">
-            <div class="results-header">
-                <div class="results-title">Valores extraídos:</div>
-                <button class="btn-copy" id="btnCopy">📋 Copiar</button>
+    <div class="main-container">
+        <!-- Panel izquierdo: Tabla de Surtidores -->
+        <div class="left-panel">
+            <h1>📋 Tabla de Surtidores</h1>
+            <p class="subtitle">Completa los valores de Inicial y Final</p>
+            
+            <div class="table-container">
+                <table class="surtidor-table" id="surtidorTable">
+                    <thead>
+                        <tr>
+                            <th>Surtidor</th>
+                            <th>Inicial</th>
+                            <th>Final</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Se llenará con JavaScript -->
+                    </tbody>
+                </table>
+                
+                <div class="table-actions">
+                    <button class="btn-order" id="btnOrder">🔄 Ordenar</button>
+                    <button class="btn-copy" id="btnCopyTable">📋 Copiar</button>
+                    <button class="btn-clear" id="btnClear">🗑️ Limpiar</button>
+                </div>
             </div>
-            <div class="output-box" id="output"></div>
-            <div class="count" id="count"></div>
+        </div>
+
+        <!-- Panel derecho: Extractor de PDF -->
+        <div class="right-panel">
+            <h2>📊 Extractor de Columna Final</h2>
+            <p class="subtitle">Extrae los valores de la columna "Final" de planillas YPF</p>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
+                <div class="upload-hint">Soporta archivos PDF de planillas de playa</div>
+            </div>
+
+            <input type="file" id="fileInput" accept=".pdf">
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Procesando archivo...</div>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="results" id="results">
+                <div class="results-header">
+                    <div class="results-title">Valores extraídos:</div>
+                    <button class="btn-copy" id="btnCopy">📋 Copiar</button>
+                </div>
+                <div class="output-box" id="output"></div>
+                <div class="count" id="count"></div>
+            </div>
         </div>
     </div>
 
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        // ========== ELEMENTOS DEL DOM ==========
+        // Tabla de surtidores
+        const tableBody = document.getElementById('tableBody');
+        const btnCopyTable = document.getElementById('btnCopyTable');
+        const btnClear = document.getElementById('btnClear');
+        const btnOrder = document.getElementById('btnOrder');
+
+        // Extractor de PDF
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const loading = document.getElementById('loading');
@@ -233,6 +381,194 @@
         const count = document.getElementById('count');
         const btnCopy = document.getElementById('btnCopy');
 
+        // ========== TABLA DE SURTIDORES ==========
+        
+        // Lista de surtidores en orden desordenado (para ingreso manual)
+        const surtidoresDesordenados = [
+            '2INF1', '1SUPER1', '4INF D1', '3D5001',
+            '2INF2', '1SUPER2', '4INF D2', '3D5002',
+            '2INF3', '1SUPER3', '4INF D3', '3D5003',
+            '2INF4', '1SUPER4', '4INF D4', '3D5004',
+            '2INF5', '1SUPER5', '4INF D5', '3D5005',
+            '2INF6', '1SUPER6', '4INF D6', '3D5006',
+            '2INF7', '1SUPER7', '4INF D7', '3D5007',
+            '2INF8', '1SUPER8', '4INF D8', '3D5008',
+            '4INF9', '3D5009'
+        ];
+
+        // Lista de surtidores en orden correcto (para ordenar)
+        const surtidoresOrdenados = [
+            '1SUPER1', '1SUPER2', '1SUPER3', '1SUPER4', '1SUPER5', '1SUPER6', '1SUPER7', '1SUPER8',
+            '2INF1', '2INF2', '2INF3', '2INF4', '2INF5', '2INF6', '2INF7', '2INF8',
+            '3D5001', '3D5002', '3D5003', '3D5004', '3D5005', '3D5006', '3D5007', '3D5008', '3D5009',
+            '4INF D1', '4INF D2', '4INF D3', '4INF D4', '4INF D5', '4INF D6', '4INF D7', '4INF D8',
+            '4INF9'
+        ];
+
+        let currentOrder = surtidoresDesordenados;
+        let isOrdered = false;
+
+        // Crear las filas de la tabla
+        function createTable() {
+            tableBody.innerHTML = '';
+            currentOrder.forEach((surtidor, index) => {
+                const row = document.createElement('tr');
+                
+                // Columna de surtidor
+                const tdSurtidor = document.createElement('td');
+                tdSurtidor.textContent = surtidor;
+                row.appendChild(tdSurtidor);
+                
+                // Columna Inicial
+                const tdInicial = document.createElement('td');
+                const inputInicial = document.createElement('input');
+                inputInicial.type = 'text';
+                inputInicial.className = 'input-inicial';
+                inputInicial.setAttribute('data-surtidor', surtidor);
+                inputInicial.placeholder = '0.00';
+                tdInicial.appendChild(inputInicial);
+                row.appendChild(tdInicial);
+                
+                // Columna Final
+                const tdFinal = document.createElement('td');
+                const inputFinal = document.createElement('input');
+                inputFinal.type = 'text';
+                inputFinal.className = 'input-final';
+                inputFinal.setAttribute('data-surtidor', surtidor);
+                inputFinal.placeholder = '0.00';
+                tdFinal.appendChild(inputFinal);
+                row.appendChild(tdFinal);
+                
+                tableBody.appendChild(row);
+            });
+
+            // Agregar event listeners para Enter
+            addEnterKeyListeners();
+        }
+
+        // Agregar listeners para la tecla Enter
+        function addEnterKeyListeners() {
+            const allInputs = document.querySelectorAll('.surtidor-table input');
+            
+            allInputs.forEach((input, index) => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Saltar 2 posiciones (siguiente fila, misma columna)
+                        const nextIndex = index + 2;
+                        if (nextIndex < allInputs.length) {
+                            allInputs[nextIndex].focus();
+                        } else {
+                            // Si estamos en la última fila de una columna, ir al inicio de la siguiente columna
+                            const nextColumnIndex = (index % 2 === 0) ? 1 : 0;
+                            if (allInputs[nextColumnIndex]) {
+                                allInputs[nextColumnIndex].focus();
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Obtener datos actuales de la tabla
+        function getCurrentData() {
+            const data = {};
+            currentOrder.forEach(surtidor => {
+                const inicialInput = document.querySelector(`.input-inicial[data-surtidor="${surtidor}"]`);
+                const finalInput = document.querySelector(`.input-final[data-surtidor="${surtidor}"]`);
+                data[surtidor] = {
+                    inicial: inicialInput ? inicialInput.value : '',
+                    final: finalInput ? finalInput.value : ''
+                };
+            });
+            return data;
+        }
+
+        // Restaurar datos en la tabla
+        function restoreData(data) {
+            currentOrder.forEach(surtidor => {
+                const inicialInput = document.querySelector(`.input-inicial[data-surtidor="${surtidor}"]`);
+                const finalInput = document.querySelector(`.input-final[data-surtidor="${surtidor}"]`);
+                if (inicialInput && data[surtidor]) {
+                    inicialInput.value = data[surtidor].inicial || '';
+                }
+                if (finalInput && data[surtidor]) {
+                    finalInput.value = data[surtidor].final || '';
+                }
+            });
+        }
+
+        // Ordenar tabla
+        btnOrder.addEventListener('click', () => {
+            const data = getCurrentData();
+            
+            if (isOrdered) {
+                // Volver al orden desordenado
+                currentOrder = surtidoresDesordenados;
+                btnOrder.textContent = '🔄 Ordenar';
+                isOrdered = false;
+            } else {
+                // Ordenar
+                currentOrder = surtidoresOrdenados;
+                btnOrder.textContent = '↩️ Desordenar';
+                isOrdered = true;
+            }
+            
+            createTable();
+            restoreData(data);
+        });
+
+        // Copiar tabla al portapapeles (solo datos de Inicial y Final en el orden actual visual)
+        btnCopyTable.addEventListener('click', () => {
+            const allInputs = document.querySelectorAll('.surtidor-table input');
+            console.log('Total inputs encontrados:', allInputs.length);
+            
+            let tableText = '';
+            
+            // Recorrer los inputs de dos en dos (inicial y final)
+            for (let i = 0; i < allInputs.length; i += 2) {
+                const inputInicial = allInputs[i];
+                const inputFinal = allInputs[i + 1];
+                
+                console.log(`Fila ${i/2 + 1}:`, {
+                    inicial: inputInicial.value,
+                    final: inputFinal ? inputFinal.value : 'N/A'
+                });
+                
+                const inicialValue = inputInicial.value || '0';
+                const finalValue = inputFinal ? (inputFinal.value || '0') : '0';
+                tableText += `${inicialValue}\t${finalValue}\n`;
+            }
+
+            console.log('Texto a copiar:', tableText);
+
+            navigator.clipboard.writeText(tableText).then(() => {
+                btnCopyTable.textContent = '✓ Copiado';
+                btnCopyTable.classList.add('copied');
+                setTimeout(() => {
+                    btnCopyTable.textContent = '📋 Copiar';
+                    btnCopyTable.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('Error al copiar: ' + err.message);
+                console.error('Error:', err);
+            });
+        });
+
+        // Limpiar todos los campos
+        btnClear.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los campos?')) {
+                document.querySelectorAll('.surtidor-table input').forEach(input => {
+                    input.value = '';
+                });
+            }
+        });
+
+        // Inicializar la tabla
+        createTable();
+
+        // ========== EXTRACTOR DE PDF ==========
+        
         uploadArea.addEventListener('click', () => fileInput.click());
 
         uploadArea.addEventListener('dragover', (e) => {
