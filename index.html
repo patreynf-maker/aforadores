@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extractor de Columna Final - Planillas YPF</title>
+    <title>Planillas YPF</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -24,694 +20,508 @@
             gap: 20px;
             max-width: 1600px;
             margin: 0 auto;
+            align-items: flex-start;
         }
 
-        .left-panel {
+        .panel {
             flex: 1;
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
         }
 
-        .right-panel {
-            flex: 1;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
+        h1 { color: #333; margin-bottom: 6px; font-size: 22px; }
+        .subtitle { color: #999; font-size: 13px; margin-bottom: 20px; }
+
+        /* ── Tabla manual ── */
+        .scroll-wrapper {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-bottom: 14px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
         }
 
-        h1, h2 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        h2 {
-            font-size: 24px;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        /* Estilos de la tabla de surtidores */
-        .table-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .surtidor-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        .surtidor-table thead {
+        thead {
             background: #667eea;
             color: white;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 5;
         }
 
-        .surtidor-table th {
-            padding: 12px;
-            text-align: left;
+        th { padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
+
+        tbody tr:nth-child(even) { background: #f8f9fa; }
+        tbody tr:hover { background: #e8eaff; }
+
+        td { padding: 4px 8px; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
+
+        td.name-cell {
             font-weight: 600;
-        }
-
-        .surtidor-table tbody tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        .surtidor-table tbody tr:hover {
-            background: #e9ecef;
-        }
-
-        .surtidor-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .surtidor-table td:first-child {
-            font-weight: 600;
-            color: #495057;
             font-family: 'Courier New', monospace;
+            color: #495057;
+            min-width: 80px;
         }
 
-        .surtidor-table input {
-            width: 100%;
-            padding: 8px;
+        td.diff-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #888;
+            min-width: 70px;
+        }
+
+        td.diff-cell.positive { color: #28a745; font-weight: 600; }
+        td.diff-cell.negative { color: #dc3545; font-weight: 600; }
+
+        td input {
+            width: 90px;
+            padding: 5px 6px;
             border: 1px solid #ced4da;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        .surtidor-table input:focus {
+        td input:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.15);
         }
 
-        .table-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: auto;
-        }
+        /* ── Botones ── */
+        .actions { display: flex; gap: 10px; }
 
-        .btn-copy, .btn-clear, .btn-order {
-            background: #667eea;
-            color: white;
+        .btn {
+            flex: 1;
+            padding: 11px 0;
             border: none;
-            padding: 12px 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: white;
         }
 
-        .btn-clear {
-            background: #dc3545;
-        }
+        .btn-blue  { background: #667eea; }
+        .btn-green { background: #28a745; }
+        .btn-red   { background: #dc3545; }
 
-        .btn-order {
-            background: #28a745;
-        }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn.copied { background: #10b981 !important; }
 
-        .btn-copy:hover, .btn-order:hover {
-            background: #764ba2;
-            transform: translateY(-1px);
-        }
-
-        .btn-order:hover {
-            background: #218838;
-        }
-
-        .btn-clear:hover {
-            background: #c82333;
-            transform: translateY(-1px);
-        }
-
-        .btn-copy:active, .btn-clear:active, .btn-order:active {
-            transform: translateY(0);
-        }
-
-        .btn-copy.copied {
-            background: #10b981;
-        }
-
-        /* Estilos del extractor de PDF */
+        /* ── PDF panel ── */
         .upload-area {
             border: 3px dashed #667eea;
             border-radius: 12px;
-            padding: 40px;
+            padding: 36px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
             background: #f8f9ff;
+            transition: all 0.3s;
+            margin-bottom: 20px;
         }
+        .upload-area:hover, .upload-area.dragging { border-color: #764ba2; background: #f0f1ff; }
+        .upload-icon { font-size: 44px; margin-bottom: 10px; }
+        .upload-text { color: #333; font-size: 15px; }
+        .upload-hint { color: #999; font-size: 12px; margin-top: 4px; }
 
-        .upload-area:hover {
-            border-color: #764ba2;
-            background: #f0f1ff;
-        }
+        #fileInput { display: none; }
 
-        .upload-area.dragging {
-            border-color: #764ba2;
-            background: #e8e9ff;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .upload-text {
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .upload-hint {
-            color: #999;
-            font-size: 13px;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .results {
-            margin-top: 30px;
-            display: none;
-        }
-
-        .results.visible {
-            display: block;
-        }
+        .results { display: none; margin-top: 20px; }
+        .results.visible { display: block; }
 
         .results-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
-
-        .results-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
+        .results-title { font-size: 16px; font-weight: 600; color: #333; }
 
         .output-box {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
-            padding: 20px;
+            padding: 16px;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            max-height: 400px;
+            font-size: 13px;
+            line-height: 1.7;
+            max-height: 55vh;
             overflow-y: auto;
             white-space: pre-wrap;
-            word-break: break-all;
         }
 
-        .count {
-            margin-top: 10px;
-            color: #666;
-            font-size: 13px;
-            font-style: italic;
-        }
+        .count { margin-top: 8px; color: #888; font-size: 12px; font-style: italic; }
 
         .error {
-            background: #fee;
-            border: 1px solid #fcc;
-            color: #c33;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
+            background: #fee; border: 1px solid #fcc; color: #c33;
+            padding: 12px; border-radius: 8px; margin-top: 16px; display: none;
         }
+        .error.visible { display: block; }
 
-        .error.visible {
-            display: block;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .loading.visible {
-            display: block;
-        }
-
+        .loading { display: none; text-align: center; margin-top: 16px; }
+        .loading.visible { display: block; }
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 38px; height: 38px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 8px;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 1200px) {
-            .main-container {
-                flex-direction: column;
-            }
+        @media (max-width: 1100px) {
+            .main-container { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <!-- Panel izquierdo: Tabla de Surtidores -->
-        <div class="left-panel">
-            <h1>📋 Tabla de Surtidores</h1>
-            <p class="subtitle">Completa los valores de Inicial y Final</p>
-            
-            <div class="table-container">
-                <table class="surtidor-table" id="surtidorTable">
-                    <thead>
-                        <tr>
-                            <th>Surtidor</th>
-                            <th>Inicial</th>
-                            <th>Final</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <!-- Se llenará con JavaScript -->
-                    </tbody>
-                </table>
-                
-                <div class="table-actions">
-                    <button class="btn-order" id="btnOrder">🔄 Ordenar</button>
-                    <button class="btn-copy" id="btnCopyTable">📋 Copiar</button>
-                    <button class="btn-clear" id="btnClear">🗑️ Limpiar</button>
-                </div>
-            </div>
+<div class="main-container">
+
+    <!-- ══ PANEL IZQUIERDO: Surtidores Manuales ══ -->
+    <div class="panel">
+        <h1>📋 Surtidores Manuales</h1>
+        <p class="subtitle">Completa los valores de Inicial y Final</p>
+
+        <div class="scroll-wrapper">
+            <table id="surtidorTable">
+                <thead>
+                    <tr>
+                        <th>Surtidor</th>
+                        <th>Inicial</th>
+                        <th>Final</th>
+                        <th>Dif</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
 
-        <!-- Panel derecho: Extractor de PDF -->
-        <div class="right-panel">
-            <h2>📊 Extractor de Columna Final</h2>
-            <p class="subtitle">Extrae los valores de la columna "Final" de planillas YPF</p>
-
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📄</div>
-                <div class="upload-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
-                <div class="upload-hint">Soporta archivos PDF de planillas de playa</div>
-            </div>
-
-            <input type="file" id="fileInput" accept=".pdf">
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <div>Procesando archivo...</div>
-            </div>
-
-            <div class="error" id="error"></div>
-
-            <div class="results" id="results">
-                <div class="results-header">
-                    <div class="results-title">Valores extraídos:</div>
-                    <button class="btn-copy" id="btnCopy">📋 Copiar</button>
-                </div>
-                <div class="output-box" id="output"></div>
-                <div class="count" id="count"></div>
-            </div>
+        <div class="actions">
+            <button class="btn btn-green" id="btnOrder">🔄 Ordenar</button>
+            <button class="btn btn-blue"  id="btnCopyTable">📋 Copiar</button>
+            <button class="btn btn-red"   id="btnClear">🗑️ Limpiar</button>
         </div>
     </div>
 
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    <!-- ══ PANEL DERECHO: Surtidores Automáticos ══ -->
+    <div class="panel">
+        <h1>📊 Surtidores Automáticos</h1>
+        <p class="subtitle">Extrae la columna "Final" de planillas YPF</p>
 
-        // ========== ELEMENTOS DEL DOM ==========
-        // Tabla de surtidores
-        const tableBody = document.getElementById('tableBody');
-        const btnCopyTable = document.getElementById('btnCopyTable');
-        const btnClear = document.getElementById('btnClear');
-        const btnOrder = document.getElementById('btnOrder');
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
+            <div class="upload-hint">Planillas de playa YPF</div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf">
 
-        // Extractor de PDF
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const loading = document.getElementById('loading');
-        const error = document.getElementById('error');
-        const results = document.getElementById('results');
-        const output = document.getElementById('output');
-        const count = document.getElementById('count');
-        const btnCopy = document.getElementById('btnCopy');
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Procesando PDF…</div>
+        </div>
 
-        // ========== TABLA DE SURTIDORES ==========
-        
-        // Lista de surtidores en orden desordenado (para ingreso manual)
-        const surtidoresDesordenados = [
-            '2INF1', '1SUPER1', '4INF D1', '3D5001',
-            '2INF2', '1SUPER2', '4INF D2', '3D5002',
-            '2INF3', '1SUPER3', '4INF D3', '3D5003',
-            '2INF4', '1SUPER4', '4INF D4', '3D5004',
-            '2INF5', '1SUPER5', '4INF D5', '3D5005',
-            '2INF6', '1SUPER6', '4INF D6', '3D5006',
-            '2INF7', '1SUPER7', '4INF D7', '3D5007',
-            '2INF8', '1SUPER8', '4INF D8', '3D5008',
-            '4INF9', '3D5009'
-        ];
+        <div class="error" id="error"></div>
 
-        // Lista de surtidores en orden correcto (para ordenar)
-        const surtidoresOrdenados = [
-            '1SUPER1', '1SUPER2', '1SUPER3', '1SUPER4', '1SUPER5', '1SUPER6', '1SUPER7', '1SUPER8',
-            '2INF1', '2INF2', '2INF3', '2INF4', '2INF5', '2INF6', '2INF7', '2INF8',
-            '3D5001', '3D5002', '3D5003', '3D5004', '3D5005', '3D5006', '3D5007', '3D5008', '3D5009',
-            '4INF D1', '4INF D2', '4INF D3', '4INF D4', '4INF D5', '4INF D6', '4INF D7', '4INF D8',
-            '4INF9'
-        ];
+        <div class="results" id="results">
+            <div class="results-header">
+                <div class="results-title">Valores extraídos</div>
+                <button class="btn btn-blue" style="flex:none;padding:9px 20px;" id="btnCopy">📋 Copiar</button>
+            </div>
+            <div class="output-box" id="output"></div>
+            <div class="count" id="count"></div>
+        </div>
+    </div>
 
-        let currentOrder = surtidoresDesordenados;
-        let isOrdered = false;
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Crear las filas de la tabla
-        function createTable() {
-            tableBody.innerHTML = '';
-            currentOrder.forEach((surtidor, index) => {
-                const row = document.createElement('tr');
-                
-                // Columna de surtidor
-                const tdSurtidor = document.createElement('td');
-                tdSurtidor.textContent = surtidor;
-                row.appendChild(tdSurtidor);
-                
-                // Columna Inicial
-                const tdInicial = document.createElement('td');
-                const inputInicial = document.createElement('input');
-                inputInicial.type = 'text';
-                inputInicial.className = 'input-inicial';
-                inputInicial.setAttribute('data-surtidor', surtidor);
-                inputInicial.placeholder = '0.00';
-                tdInicial.appendChild(inputInicial);
-                row.appendChild(tdInicial);
-                
-                // Columna Final
-                const tdFinal = document.createElement('td');
-                const inputFinal = document.createElement('input');
-                inputFinal.type = 'text';
-                inputFinal.className = 'input-final';
-                inputFinal.setAttribute('data-surtidor', surtidor);
-                inputFinal.placeholder = '0.00';
-                tdFinal.appendChild(inputFinal);
-                row.appendChild(tdFinal);
-                
-                tableBody.appendChild(row);
-            });
+// ══════════════════════════════════════════════
+//  SURTIDORES MANUALES
+// ══════════════════════════════════════════════
 
-            // Agregar event listeners para Enter
-            addEnterKeyListeners();
+const DESORDENADOS = [
+    '2INF1','1SUPER1','4INF D1','3D5001',
+    '2INF2','1SUPER2','4INF D2','3D5002',
+    '2INF3','1SUPER3','4INF D3','3D5003',
+    '2INF4','1SUPER4','4INF D4','3D5004',
+    '2INF5','1SUPER5','4INF D5','3D5005',
+    '2INF6','1SUPER6','4INF D6','3D5006',
+    '2INF7','1SUPER7','4INF D7','3D5007',
+    '2INF8','1SUPER8','4INF D8','3D5008',
+    '4INF9','3D5009'
+];
+
+const ORDENADOS = [
+    '1SUPER1','1SUPER2','1SUPER3','1SUPER4','1SUPER5','1SUPER6','1SUPER7','1SUPER8',
+    '2INF1','2INF2','2INF3','2INF4','2INF5','2INF6','2INF7','2INF8',
+    '3D5001','3D5002','3D5003','3D5004','3D5005','3D5006','3D5007','3D5008','3D5009',
+    '4INF D1','4INF D2','4INF D3','4INF D4','4INF D5','4INF D6','4INF D7','4INF D8',
+    '4INF9'
+];
+
+// Mapa de datos: clave = nombre surtidor, valor = { inicial, final }
+const datos = {};
+DESORDENADOS.forEach(s => { datos[s] = { inicial: '', final: '' }; });
+
+let isOrdered = false;
+
+const tableBody   = document.getElementById('tableBody');
+const btnOrder    = document.getElementById('btnOrder');
+const btnCopyTable= document.getElementById('btnCopyTable');
+const btnClear    = document.getElementById('btnClear');
+
+function saveFromDOM() {
+    // Leer todos los inputs y guardar en el mapa `datos`
+    document.querySelectorAll('tr[data-key]').forEach(row => {
+        const key = row.dataset.key;
+        datos[key].inicial = row.querySelector('.inp-ini').value;
+        datos[key].final   = row.querySelector('.inp-fin').value;
+    });
+}
+
+function renderTable() {
+    const order = isOrdered ? ORDENADOS : DESORDENADOS;
+    tableBody.innerHTML = '';
+
+    order.forEach(surtidor => {
+        const d = datos[surtidor] || { inicial: '', final: '' };
+
+        const ini = parseFloat(d.inicial) || 0;
+        const fin = parseFloat(d.final)   || 0;
+        const diff = (d.inicial || d.final) ? (fin - ini) : null;
+
+        let diffText  = '';
+        let diffClass = 'diff-cell';
+        if (diff !== null) {
+            diffText = diff.toFixed(2);
+            if (diff > 0) diffClass += ' positive';
+            else if (diff < 0) diffClass += ' negative';
         }
 
-        // Agregar listeners para la tecla Enter
-        function addEnterKeyListeners() {
-            const allInputs = document.querySelectorAll('.surtidor-table input');
-            
-            allInputs.forEach((input, index) => {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        // Saltar 2 posiciones (siguiente fila, misma columna)
-                        const nextIndex = index + 2;
-                        if (nextIndex < allInputs.length) {
-                            allInputs[nextIndex].focus();
-                        } else {
-                            // Si estamos en la última fila de una columna, ir al inicio de la siguiente columna
-                            const nextColumnIndex = (index % 2 === 0) ? 1 : 0;
-                            if (allInputs[nextColumnIndex]) {
-                                allInputs[nextColumnIndex].focus();
-                            }
-                        }
-                    }
-                });
-            });
-        }
+        const tr = document.createElement('tr');
+        tr.dataset.key = surtidor;
+        tr.innerHTML = `
+            <td class="name-cell">${surtidor}</td>
+            <td><input class="inp-ini" type="text" value="${d.inicial}" placeholder="0.00"></td>
+            <td><input class="inp-fin" type="text" value="${d.final}"   placeholder="0.00"></td>
+            <td class="${diffClass}">${diffText}</td>
+        `;
+        tableBody.appendChild(tr);
+    });
 
-        // Obtener datos actuales de la tabla
-        function getCurrentData() {
-            const data = {};
-            currentOrder.forEach(surtidor => {
-                const inicialInput = document.querySelector(`.input-inicial[data-surtidor="${surtidor}"]`);
-                const finalInput = document.querySelector(`.input-final[data-surtidor="${surtidor}"]`);
-                data[surtidor] = {
-                    inicial: inicialInput ? inicialInput.value : '',
-                    final: finalInput ? finalInput.value : ''
-                };
-            });
-            return data;
-        }
+    addListeners();
+}
 
-        // Restaurar datos en la tabla
-        function restoreData(data) {
-            currentOrder.forEach(surtidor => {
-                const inicialInput = document.querySelector(`.input-inicial[data-surtidor="${surtidor}"]`);
-                const finalInput = document.querySelector(`.input-final[data-surtidor="${surtidor}"]`);
-                if (inicialInput && data[surtidor]) {
-                    inicialInput.value = data[surtidor].inicial || '';
-                }
-                if (finalInput && data[surtidor]) {
-                    finalInput.value = data[surtidor].final || '';
-                }
-            });
-        }
+function addListeners() {
+    const inputs = tableBody.querySelectorAll('input');
+    inputs.forEach((inp, idx) => {
+        // Actualizar diff en tiempo real
+        inp.addEventListener('input', () => {
+            const row = inp.closest('tr');
+            const key = row.dataset.key;
+            datos[key].inicial = row.querySelector('.inp-ini').value;
+            datos[key].final   = row.querySelector('.inp-fin').value;
 
-        // Ordenar tabla
-        btnOrder.addEventListener('click', () => {
-            const data = getCurrentData();
-            
-            if (isOrdered) {
-                // Volver al orden desordenado
-                currentOrder = surtidoresDesordenados;
-                btnOrder.textContent = '🔄 Ordenar';
-                isOrdered = false;
+            const ini  = parseFloat(datos[key].inicial) || 0;
+            const fin  = parseFloat(datos[key].final)   || 0;
+            const diff = (datos[key].inicial || datos[key].final) ? (fin - ini) : null;
+            const diffCell = row.querySelector('td:last-child');
+            diffCell.className = 'diff-cell';
+            if (diff !== null) {
+                diffCell.textContent = diff.toFixed(2);
+                if (diff > 0) diffCell.classList.add('positive');
+                else if (diff < 0) diffCell.classList.add('negative');
             } else {
-                // Ordenar
-                currentOrder = surtidoresOrdenados;
-                btnOrder.textContent = '↩️ Desordenar';
-                isOrdered = true;
-            }
-            
-            createTable();
-            restoreData(data);
-        });
-
-        // Copiar tabla al portapapeles (solo datos de Inicial y Final en el orden actual visual)
-        btnCopyTable.addEventListener('click', () => {
-            const allInputs = document.querySelectorAll('.surtidor-table input');
-            console.log('Total inputs encontrados:', allInputs.length);
-            
-            let tableText = '';
-            
-            // Recorrer los inputs de dos en dos (inicial y final)
-            for (let i = 0; i < allInputs.length; i += 2) {
-                const inputInicial = allInputs[i];
-                const inputFinal = allInputs[i + 1];
-                
-                console.log(`Fila ${i/2 + 1}:`, {
-                    inicial: inputInicial.value,
-                    final: inputFinal ? inputFinal.value : 'N/A'
-                });
-                
-                const inicialValue = inputInicial.value || '0';
-                const finalValue = inputFinal ? (inputFinal.value || '0') : '0';
-                tableText += `${inicialValue}\t${finalValue}\n`;
-            }
-
-            console.log('Texto a copiar:', tableText);
-
-            navigator.clipboard.writeText(tableText).then(() => {
-                btnCopyTable.textContent = '✓ Copiado';
-                btnCopyTable.classList.add('copied');
-                setTimeout(() => {
-                    btnCopyTable.textContent = '📋 Copiar';
-                    btnCopyTable.classList.remove('copied');
-                }, 2000);
-            }).catch(err => {
-                alert('Error al copiar: ' + err.message);
-                console.error('Error:', err);
-            });
-        });
-
-        // Limpiar todos los campos
-        btnClear.addEventListener('click', () => {
-            if (confirm('¿Estás seguro de que quieres limpiar todos los campos?')) {
-                document.querySelectorAll('.surtidor-table input').forEach(input => {
-                    input.value = '';
-                });
+                diffCell.textContent = '';
             }
         });
 
-        // Inicializar la tabla
-        createTable();
-
-        // ========== EXTRACTOR DE PDF ==========
-        
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
+        // Enter: saltar a misma columna, siguiente fila
+        inp.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
             e.preventDefault();
-            uploadArea.classList.add('dragging');
+            // Cada fila tiene 2 inputs; saltar 2 posiciones
+            const next = inputs[idx + 2];
+            if (next) next.focus();
         });
+    });
+}
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragging');
-        });
+btnOrder.addEventListener('click', () => {
+    saveFromDOM();
+    isOrdered = !isOrdered;
+    btnOrder.textContent = isOrdered ? '↩️ Desordenar' : '🔄 Ordenar';
+    renderTable();
+});
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragging');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type === 'application/pdf') {
-                processFile(file);
-            } else {
-                showError('Por favor, selecciona un archivo PDF válido.');
-            }
-        });
+btnCopyTable.addEventListener('click', () => {
+    saveFromDOM();
+    const order = isOrdered ? ORDENADOS : DESORDENADOS;
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                processFile(file);
-            }
-        });
+    // Detectar si hay datos en cada columna
+    const hayInicial = order.some(s => datos[s].inicial.trim() !== '');
+    const hayFinal   = order.some(s => datos[s].final.trim()   !== '');
 
-        btnCopy.addEventListener('click', () => {
-            const text = output.textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                btnCopy.textContent = '✓ Copiado';
-                btnCopy.classList.add('copied');
-                setTimeout(() => {
-                    btnCopy.textContent = '📋 Copiar';
-                    btnCopy.classList.remove('copied');
-                }, 2000);
-            });
-        });
+    let lines = [];
+    order.forEach(s => {
+        const ini = datos[s].inicial.trim();
+        const fin = datos[s].final.trim();
+        if (hayInicial && hayFinal) {
+            lines.push(`${ini || '0'}\t${fin || '0'}`);
+        } else if (hayInicial) {
+            lines.push(ini || '0');
+        } else if (hayFinal) {
+            lines.push(fin || '0');
+        }
+    });
 
-        async function processFile(file) {
-            hideError();
-            results.classList.remove('visible');
-            loading.classList.add('visible');
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        btnCopyTable.textContent = '✓ Copiado';
+        btnCopyTable.classList.add('copied');
+        setTimeout(() => {
+            btnCopyTable.textContent = '📋 Copiar';
+            btnCopyTable.classList.remove('copied');
+        }, 2000);
+    });
+});
 
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                
-                let allItems = [];
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    allItems = allItems.concat(textContent.items);
-                }
+btnClear.addEventListener('click', () => {
+    if (!confirm('¿Limpiar todos los campos?')) return;
+    DESORDENADOS.forEach(s => { datos[s] = { inicial: '', final: '' }; });
+    isOrdered = false;
+    btnOrder.textContent = '🔄 Ordenar';
+    renderTable();
+});
 
-                const finalValues = extractFinalColumn(allItems);
-                
-                if (finalValues.length === 0) {
-                    showError('No se encontraron valores en la columna "Final". Verifica que el PDF tenga el formato esperado.');
-                    return;
-                }
+// Iniciar tabla
+renderTable();
 
-                displayResults(finalValues);
-            } catch (err) {
-                showError(`Error al procesar el archivo: ${err.message}`);
-            } finally {
-                loading.classList.remove('visible');
-            }
+// ══════════════════════════════════════════════
+//  SURTIDORES AUTOMÁTICOS (PDF)
+// ══════════════════════════════════════════════
+
+const uploadArea = document.getElementById('uploadArea');
+const fileInput  = document.getElementById('fileInput');
+const loading    = document.getElementById('loading');
+const errorDiv   = document.getElementById('error');
+const results    = document.getElementById('results');
+const output     = document.getElementById('output');
+const countDiv   = document.getElementById('count');
+const btnCopy    = document.getElementById('btnCopy');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragging'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragging'));
+uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragging');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') processFile(f);
+    else showError('Por favor, selecciona un archivo PDF válido.');
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) processFile(e.target.files[0]); });
+
+btnCopy.addEventListener('click', () => {
+    const text = output.textContent.trim();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        btnCopy.textContent = '✓ Copiado';
+        btnCopy.classList.add('copied');
+        setTimeout(() => {
+            btnCopy.textContent = '📋 Copiar';
+            btnCopy.classList.remove('copied');
+        }, 2000);
+    });
+});
+
+async function processFile(file) {
+    showError(''); errorDiv.classList.remove('visible');
+    results.classList.remove('visible');
+    loading.classList.add('visible');
+    try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        let items = [];
+        for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const tc = await page.getTextContent();
+            items = items.concat(tc.items);
+        }
+        const vals = extractFinal(items);
+        if (!vals.length) { showError('No se encontraron valores en la columna "Final".'); return; }
+        output.textContent = vals.join('\n');
+        countDiv.textContent = `Total: ${vals.length} valores`;
+        results.classList.add('visible');
+    } catch(err) {
+        showError('Error: ' + err.message);
+    } finally {
+        loading.classList.remove('visible');
+    }
+}
+
+function extractFinal(items) {
+    // Agrupar tokens por línea (misma coordenada Y ±2px)
+    const lines = [];
+    let cur = [], lastY = null;
+    for (const item of items) {
+        const txt = item.str.trim();
+        const y   = Math.round(item.transform[5]);
+        if (lastY !== null && Math.abs(y - lastY) > 2) {
+            if (cur.length) lines.push(cur);
+            cur = [];
+        }
+        if (txt) cur.push(txt);
+        lastY = y;
+    }
+    if (cur.length) lines.push(cur);
+
+    const vals = [];
+    for (const line of lines) {
+        // Líneas de surtidor empiezan con el precio: "$" seguido de número
+        if (!line[0].startsWith('$')) continue;
+
+        // Extraer todos los tokens numéricos de la línea
+        const nums = [];
+        for (const tok of line) {
+            // Cada token puede ser un número con formato "155885,91" o "2045,0000"
+            if (/^\d[\d\.,]*$/.test(tok)) nums.push(tok);
         }
 
-        function extractFinalColumn(items) {
-            const values = [];
-            
-            // Reconstruir el texto respetando las posiciones
-            let currentLine = [];
-            let lastY = null;
-            
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const text = item.str.trim();
-                
-                // Si cambió la coordenada Y, es una nueva línea
-                if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) {
-                    processLine(currentLine, values);
-                    currentLine = [];
-                }
-                
-                if (text) {
-                    currentLine.push(text);
-                }
-                lastY = item.transform[5];
-            }
-            
-            // Procesar la última línea
-            if (currentLine.length > 0) {
-                processLine(currentLine, values);
-            }
+        // Estructura esperada (ignorando el $):
+        // [precio, surtidor_num, inicial, FINAL, manual, lts, importe]
+        // índices en nums (sin el $):
+        //   0 = precio (ej: 2045,0000)
+        //   1 = nro surtidor (ej: 02)
+        //   2 = inicial
+        //   3 = FINAL  ← queremos este
+        //   4 = manual
+        //   5 = lts
+        //   6 = importe
+        if (nums.length >= 7) {
+            vals.push(nums[3]);
+        }
+    }
+    return vals;
+}
 
-            return values;
-        }
-        
-        function processLine(tokens, values) {
-            // Buscar líneas que empiezan con $
-            if (tokens.length > 0 && tokens[0].startsWith('$')) {
-                // Extraer todos los números de los tokens
-                const numbers = [];
-                for (let token of tokens) {
-                    // Buscar números con formato xxx,xxx.xx o xxx.xx
-                    const matches = token.match(/\d+[\d,\.]*\d+|\d+/g);
-                    if (matches) {
-                        numbers.push(...matches);
-                    }
-                }
-                
-                // Necesitamos al menos 7 números: precio, surtidor, inicial, FINAL, manual, lts, importe
-                if (numbers.length >= 7) {
-                    // El valor "Final" está en la posición 3 (índice 3)
-                    const finalValue = numbers[3];
-                    
-                    // Validar que tenga formato de número con decimales (contiene coma o punto)
-                    if (finalValue && (finalValue.includes(',') || finalValue.includes('.'))) {
-                        values.push(finalValue);
-                    }
-                }
-            }
-        }
-
-        function displayResults(values) {
-            output.textContent = values.join('\n');
-            count.textContent = `Total: ${values.length} valores encontrados`;
-            results.classList.add('visible');
-        }
-
-        function showError(message) {
-            error.textContent = message;
-            error.classList.add('visible');
-        }
-
-        function hideError() {
-            error.classList.remove('visible');
-        }
-    </script>
+function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.classList.toggle('visible', msg !== '');
+}
+</script>
 </body>
 </html>
