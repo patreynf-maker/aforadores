@@ -439,8 +439,14 @@ function extractFinal(items) {
     const xMin = Math.min(...dolarItems.map(it => it.transform[4]));
     const dolarSurtidores = dolarItems.filter(it => it.transform[4] < xMin + 10);
 
-    const vals = [];
-    const debug = [];
+    // Primero, calibrar la X de las columnas Inicial y Final
+    // usando una línea donde sabemos que hay despacho (inicial != final)
+    // La columna Inicial y Final están siempre en la misma X relativa al $
+    // Vamos a detectar esas X automáticamente buscando líneas con 2+ números grandes distintos
+
+    // Recopilar todos los números grandes por X relativa al $
+    const xRelMap = new Map(); // xRel -> [valores]
+
     for (const dolar of dolarSurtidores) {
         const yRef = dolar.transform[5];
         const xRef = dolar.transform[4];
@@ -451,24 +457,55 @@ function extractFinal(items) {
                        && it.transform[4] <= xRef + 480)
             .sort((a, b) => a.transform[4] - b.transform[4]);
 
-        const tokens = fila.map(it => it.str.trim()).filter(Boolean);
-        const nums = tokens.filter(t => /^\d[\d\.]*,\d+$/.test(t));
-        const grandes = nums.filter(t => t.split(',')[0].length >= 5);
-
-        // Debug: guardar líneas que tienen "441" o "548" para identificar el problema
-        if (tokens.join(' ').includes('441') || tokens.join(' ').includes('548')) {
-            debug.push('tokens: ' + JSON.stringify(tokens));
-            debug.push('grandes: ' + JSON.stringify(grandes));
-        }
-
-        if (grandes.length >= 2) {
-            vals.push(grandes[1]);
-        } else if (grandes.length === 1) {
-            vals.push(grandes[0]);
+        for (const it of fila) {
+            const txt = it.str.trim();
+            if (!/^\d{5,},\d{2}$/.test(txt)) continue; // solo odómetros: 5+ dígitos, exactamente 2 decimales
+            const xRel = Math.round(it.transform[4] - xRef);
+            if (!xRelMap.has(xRel)) xRelMap.set(xRel, 0);
+            xRelMap.set(xRel, xRelMap.get(xRel) + 1);
         }
     }
 
-    if (debug.length) vals.unshift('=== DEBUG ===\n' + debug.join('\n') + '\n=============');
+    // Las dos X relativas más frecuentes son Inicial y Final
+    const xRels = [...xRelMap.entries()].sort((a, b) => a[0] - b[0]);
+    // Tomar solo las que aparecen en al menos la mitad de las filas
+    const threshold = dolarSurtidores.length * 0.3;
+    const xCols = xRels.filter(([x, count]) => count >= threshold).map(([x]) => x);
+
+    // xCols[0] = X relativa de Inicial, xCols[1] = X relativa de Final
+    if (xCols.length < 2) {
+        // Fallback: tomar las dos X más comunes
+        const top2 = xRels.sort((a, b) => b[1] - a[1]).slice(0, 2).sort((a, b) => a[0] - b[0]);
+        xCols.push(...top2.map(([x]) => x));
+    }
+
+    const xFinalRef = xCols[1]; // X relativa de la columna Final
+    const tolerance = 8; // tolerancia en px
+
+    const vals = [];
+    for (const dolar of dolarSurtidores) {
+        const yRef = dolar.transform[5];
+        const xRef = dolar.transform[4];
+
+        // Buscar el token en la X de la columna Final (±tolerance px)
+        const candidatos = items.filter(it => {
+            const xRel = it.transform[4] - xRef;
+            return Math.abs(it.transform[5] - yRef) <= 4
+                && Math.abs(xRel - xFinalRef) <= tolerance;
+        });
+
+        if (candidatos.length > 0) {
+            // Tomar el más cercano a xFinalRef
+            candidatos.sort((a, b) =>
+                Math.abs(a.transform[4] - xRef - xFinalRef) - Math.abs(b.transform[4] - xRef - xFinalRef)
+            );
+            const val = candidatos[0].str.trim();
+            if (/^\d{5,},\d{2}$/.test(val)) {
+                vals.push(val);
+            }
+        }
+    }
+
     return vals;
 }
 
