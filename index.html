@@ -20,7 +20,7 @@
             gap: 20px;
             max-width: 1600px;
             margin: 0 auto;
-            align-items: flex-start;
+            align-items: stretch;
         }
 
         .panel {
@@ -29,25 +29,22 @@
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 30px;
+            display: flex;
+            flex-direction: column;
         }
 
-        h1 { color: #333; margin-bottom: 6px; font-size: 22px; }
-        .subtitle { color: #999; font-size: 13px; margin-bottom: 20px; }
+        h1 { color: #333; margin-bottom: 20px; font-size: 22px; }
 
         /* ── Tabla manual ── */
         .scroll-wrapper {
-            max-height: 70vh;
+            flex: 1;
             overflow-y: auto;
             margin-bottom: 14px;
             border: 1px solid #e9ecef;
             border-radius: 8px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
         thead {
             background: #667eea;
@@ -58,10 +55,8 @@
         }
 
         th { padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
-
         tbody tr:nth-child(even) { background: #f8f9fa; }
         tbody tr:hover { background: #e8eaff; }
-
         td { padding: 4px 8px; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
 
         td.name-cell {
@@ -71,13 +66,7 @@
             min-width: 80px;
         }
 
-        td.diff-cell {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #888;
-            min-width: 70px;
-        }
-
+        td.diff-cell { font-family: 'Courier New', monospace; font-size: 12px; color: #888; min-width: 70px; }
         td.diff-cell.positive { color: #28a745; font-weight: 600; }
         td.diff-cell.negative { color: #dc3545; font-weight: 600; }
 
@@ -89,7 +78,6 @@
             font-family: 'Courier New', monospace;
             font-size: 12px;
         }
-
         td input:focus {
             outline: none;
             border-color: #667eea;
@@ -110,11 +98,9 @@
             transition: all 0.2s;
             color: white;
         }
-
         .btn-blue  { background: #667eea; }
         .btn-green { background: #28a745; }
         .btn-red   { background: #dc3545; }
-
         .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
         .btn.copied { background: #10b981 !important; }
@@ -137,18 +123,11 @@
 
         #fileInput { display: none; }
 
-        .results { display: none; margin-top: 20px; }
-        .results.visible { display: block; }
-
-        .results-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .results-title { font-size: 16px; font-weight: 600; color: #333; }
+        .results { display: none; flex: 1; flex-direction: column; }
+        .results.visible { display: flex; }
 
         .output-box {
+            flex: 1;
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
@@ -156,20 +135,20 @@
             font-family: 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.7;
-            max-height: 55vh;
             overflow-y: auto;
             white-space: pre-wrap;
+            margin-bottom: 8px;
         }
 
-        .count { margin-top: 8px; color: #888; font-size: 12px; font-style: italic; }
+        .count { color: #888; font-size: 12px; font-style: italic; margin-bottom: 14px; }
 
         .error {
             background: #fee; border: 1px solid #fcc; color: #c33;
-            padding: 12px; border-radius: 8px; margin-top: 16px; display: none;
+            padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none;
         }
         .error.visible { display: block; }
 
-        .loading { display: none; text-align: center; margin-top: 16px; }
+        .loading { display: none; text-align: center; padding: 20px 0; }
         .loading.visible { display: block; }
         .spinner {
             border: 3px solid #f3f3f3;
@@ -189,13 +168,11 @@
 <body>
 <div class="main-container">
 
-    <!-- ══ PANEL IZQUIERDO: Surtidores Manuales ══ -->
+    <!-- PANEL IZQUIERDO: Surtidores Manuales -->
     <div class="panel">
         <h1>📋 Surtidores Manuales</h1>
-        <p class="subtitle">Completa los valores de Inicial y Final</p>
-
         <div class="scroll-wrapper">
-            <table id="surtidorTable">
+            <table>
                 <thead>
                     <tr>
                         <th>Surtidor</th>
@@ -207,7 +184,6 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
-
         <div class="actions">
             <button class="btn btn-green" id="btnOrder">🔄 Ordenar</button>
             <button class="btn btn-blue"  id="btnCopyTable">📋 Copiar</button>
@@ -215,11 +191,9 @@
         </div>
     </div>
 
-    <!-- ══ PANEL DERECHO: Surtidores Automáticos ══ -->
+    <!-- PANEL DERECHO: Surtidores Automáticos -->
     <div class="panel">
         <h1>📊 Surtidores Automáticos</h1>
-        <p class="subtitle">Extrae la columna "Final" de planillas YPF</p>
-
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📄</div>
             <div class="upload-text">Arrastra tu PDF aquí o haz clic para seleccionar</div>
@@ -235,12 +209,11 @@
         <div class="error" id="error"></div>
 
         <div class="results" id="results">
-            <div class="results-header">
-                <div class="results-title">Valores extraídos</div>
-                <button class="btn btn-blue" style="flex:none;padding:9px 20px;" id="btnCopy">📋 Copiar</button>
-            </div>
             <div class="output-box" id="output"></div>
             <div class="count" id="count"></div>
+            <div class="actions">
+                <button class="btn btn-blue" id="btnCopy">📋 Copiar</button>
+            </div>
         </div>
     </div>
 
@@ -249,9 +222,7 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ══════════════════════════════════════════════
-//  SURTIDORES MANUALES
-// ══════════════════════════════════════════════
+// ══ SURTIDORES MANUALES ══
 
 const DESORDENADOS = [
     '2INF1','1SUPER1','4INF D1','3D5001',
@@ -273,19 +244,16 @@ const ORDENADOS = [
     '4INF9'
 ];
 
-// Mapa de datos: clave = nombre surtidor, valor = { inicial, final }
 const datos = {};
 DESORDENADOS.forEach(s => { datos[s] = { inicial: '', final: '' }; });
-
 let isOrdered = false;
 
-const tableBody   = document.getElementById('tableBody');
-const btnOrder    = document.getElementById('btnOrder');
-const btnCopyTable= document.getElementById('btnCopyTable');
-const btnClear    = document.getElementById('btnClear');
+const tableBody    = document.getElementById('tableBody');
+const btnOrder     = document.getElementById('btnOrder');
+const btnCopyTable = document.getElementById('btnCopyTable');
+const btnClear     = document.getElementById('btnClear');
 
 function saveFromDOM() {
-    // Leer todos los inputs y guardar en el mapa `datos`
     document.querySelectorAll('tr[data-key]').forEach(row => {
         const key = row.dataset.key;
         datos[key].inicial = row.querySelector('.inp-ini').value;
@@ -299,27 +267,43 @@ function renderTable() {
 
     order.forEach(surtidor => {
         const d = datos[surtidor] || { inicial: '', final: '' };
-
-        const ini = parseFloat(d.inicial) || 0;
-        const fin = parseFloat(d.final)   || 0;
+        const ini  = parseFloat(d.inicial.replace(',','.')) || 0;
+        const fin  = parseFloat(d.final.replace(',','.'))   || 0;
         const diff = (d.inicial || d.final) ? (fin - ini) : null;
 
-        let diffText  = '';
-        let diffClass = 'diff-cell';
+        let diffText = '', diffClass = 'diff-cell';
         if (diff !== null) {
             diffText = diff.toFixed(2);
-            if (diff > 0) diffClass += ' positive';
-            else if (diff < 0) diffClass += ' negative';
+            diffClass += diff > 0 ? ' positive' : diff < 0 ? ' negative' : '';
         }
 
         const tr = document.createElement('tr');
         tr.dataset.key = surtidor;
-        tr.innerHTML = `
-            <td class="name-cell">${surtidor}</td>
-            <td><input class="inp-ini" type="text" value="${d.inicial}" placeholder="0.00"></td>
-            <td><input class="inp-fin" type="text" value="${d.final}"   placeholder="0.00"></td>
-            <td class="${diffClass}">${diffText}</td>
-        `;
+
+        const tdName = document.createElement('td');
+        tdName.className = 'name-cell';
+        tdName.textContent = surtidor;
+
+        const tdIni = document.createElement('td');
+        const inpIni = document.createElement('input');
+        inpIni.className = 'inp-ini'; inpIni.type = 'text';
+        inpIni.value = d.inicial; inpIni.placeholder = '0.00';
+        tdIni.appendChild(inpIni);
+
+        const tdFin = document.createElement('td');
+        const inpFin = document.createElement('input');
+        inpFin.className = 'inp-fin'; inpFin.type = 'text';
+        inpFin.value = d.final; inpFin.placeholder = '0.00';
+        tdFin.appendChild(inpFin);
+
+        const tdDiff = document.createElement('td');
+        tdDiff.className = diffClass;
+        tdDiff.textContent = diffText;
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdIni);
+        tr.appendChild(tdFin);
+        tr.appendChild(tdDiff);
         tableBody.appendChild(tr);
     });
 
@@ -329,34 +313,27 @@ function renderTable() {
 function addListeners() {
     const inputs = tableBody.querySelectorAll('input');
     inputs.forEach((inp, idx) => {
-        // Actualizar diff en tiempo real
         inp.addEventListener('input', () => {
             const row = inp.closest('tr');
             const key = row.dataset.key;
             datos[key].inicial = row.querySelector('.inp-ini').value;
             datos[key].final   = row.querySelector('.inp-fin').value;
-
-            const ini  = parseFloat(datos[key].inicial) || 0;
-            const fin  = parseFloat(datos[key].final)   || 0;
+            const ini  = parseFloat(datos[key].inicial.replace(',','.')) || 0;
+            const fin  = parseFloat(datos[key].final.replace(',','.'))   || 0;
             const diff = (datos[key].inicial || datos[key].final) ? (fin - ini) : null;
-            const diffCell = row.querySelector('td:last-child');
-            diffCell.className = 'diff-cell';
+            const cell = row.querySelector('td:last-child');
+            cell.className = 'diff-cell';
             if (diff !== null) {
-                diffCell.textContent = diff.toFixed(2);
-                if (diff > 0) diffCell.classList.add('positive');
-                else if (diff < 0) diffCell.classList.add('negative');
+                cell.textContent = diff.toFixed(2);
+                cell.classList.add(diff > 0 ? 'positive' : diff < 0 ? 'negative' : '');
             } else {
-                diffCell.textContent = '';
+                cell.textContent = '';
             }
         });
-
-        // Enter: saltar a misma columna, siguiente fila
         inp.addEventListener('keydown', e => {
             if (e.key !== 'Enter') return;
             e.preventDefault();
-            // Cada fila tiene 2 inputs; saltar 2 posiciones
-            const next = inputs[idx + 2];
-            if (next) next.focus();
+            if (inputs[idx + 2]) inputs[idx + 2].focus();
         });
     });
 }
@@ -371,31 +348,20 @@ btnOrder.addEventListener('click', () => {
 btnCopyTable.addEventListener('click', () => {
     saveFromDOM();
     const order = isOrdered ? ORDENADOS : DESORDENADOS;
-
-    // Detectar si hay datos en cada columna
     const hayInicial = order.some(s => datos[s].inicial.trim() !== '');
     const hayFinal   = order.some(s => datos[s].final.trim()   !== '');
-
-    let lines = [];
-    order.forEach(s => {
+    const lines = order.map(s => {
         const ini = datos[s].inicial.trim();
         const fin = datos[s].final.trim();
-        if (hayInicial && hayFinal) {
-            lines.push(`${ini || '0'}\t${fin || '0'}`);
-        } else if (hayInicial) {
-            lines.push(ini || '0');
-        } else if (hayFinal) {
-            lines.push(fin || '0');
-        }
-    });
-
+        if (hayInicial && hayFinal) return `${ini||'0'}\t${fin||'0'}`;
+        if (hayInicial) return ini || '0';
+        if (hayFinal)   return fin || '0';
+        return '';
+    }).filter(Boolean);
     navigator.clipboard.writeText(lines.join('\n')).then(() => {
         btnCopyTable.textContent = '✓ Copiado';
         btnCopyTable.classList.add('copied');
-        setTimeout(() => {
-            btnCopyTable.textContent = '📋 Copiar';
-            btnCopyTable.classList.remove('copied');
-        }, 2000);
+        setTimeout(() => { btnCopyTable.textContent = '📋 Copiar'; btnCopyTable.classList.remove('copied'); }, 2000);
     });
 });
 
@@ -407,12 +373,9 @@ btnClear.addEventListener('click', () => {
     renderTable();
 });
 
-// Iniciar tabla
 renderTable();
 
-// ══════════════════════════════════════════════
-//  SURTIDORES AUTOMÁTICOS (PDF)
-// ══════════════════════════════════════════════
+// ══ SURTIDORES AUTOMÁTICOS (PDF) ══
 
 const uploadArea = document.getElementById('uploadArea');
 const fileInput  = document.getElementById('fileInput');
@@ -441,27 +404,23 @@ btnCopy.addEventListener('click', () => {
     navigator.clipboard.writeText(text).then(() => {
         btnCopy.textContent = '✓ Copiado';
         btnCopy.classList.add('copied');
-        setTimeout(() => {
-            btnCopy.textContent = '📋 Copiar';
-            btnCopy.classList.remove('copied');
-        }, 2000);
+        setTimeout(() => { btnCopy.textContent = '📋 Copiar'; btnCopy.classList.remove('copied'); }, 2000);
     });
 });
 
 async function processFile(file) {
-    showError(''); errorDiv.classList.remove('visible');
+    showError('');
     results.classList.remove('visible');
     loading.classList.add('visible');
     try {
         const buf = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        let items = [];
+        let allItems = [];
         for (let p = 1; p <= pdf.numPages; p++) {
             const page = await pdf.getPage(p);
-            const tc = await page.getTextContent();
-            items = items.concat(tc.items);
+            allItems = allItems.concat((await page.getTextContent()).items);
         }
-        const vals = extractFinal(items);
+        const vals = extractFinal(allItems);
         if (!vals.length) { showError('No se encontraron valores en la columna "Final".'); return; }
         output.textContent = vals.join('\n');
         countDiv.textContent = `Total: ${vals.length} valores`;
@@ -474,47 +433,42 @@ async function processFile(file) {
 }
 
 function extractFinal(items) {
-    // Agrupar tokens por línea (misma coordenada Y ±2px)
-    const lines = [];
-    let cur = [], lastY = null;
-    for (const item of items) {
-        const txt = item.str.trim();
-        const y   = Math.round(item.transform[5]);
-        if (lastY !== null && Math.abs(y - lastY) > 2) {
-            if (cur.length) lines.push(cur);
-            cur = [];
-        }
-        if (txt) cur.push(txt);
-        lastY = y;
-    }
-    if (cur.length) lines.push(cur);
+    const dolarItems = items.filter(it => it.str.trim() === '$');
+    if (!dolarItems.length) return [];
+
+    const xMin = Math.min(...dolarItems.map(it => it.transform[4]));
+    const dolarSurtidores = dolarItems.filter(it => it.transform[4] < xMin + 10);
 
     const vals = [];
-    for (const line of lines) {
-        // Líneas de surtidor empiezan con el precio: "$" seguido de número
-        if (!line[0].startsWith('$')) continue;
+    const debug = [];
+    for (const dolar of dolarSurtidores) {
+        const yRef = dolar.transform[5];
+        const xRef = dolar.transform[4];
 
-        // Extraer todos los tokens numéricos de la línea
-        const nums = [];
-        for (const tok of line) {
-            // Cada token puede ser un número con formato "155885,91" o "2045,0000"
-            if (/^\d[\d\.,]*$/.test(tok)) nums.push(tok);
+        const fila = items
+            .filter(it => Math.abs(it.transform[5] - yRef) <= 4
+                       && it.transform[4] >= xRef
+                       && it.transform[4] <= xRef + 480)
+            .sort((a, b) => a.transform[4] - b.transform[4]);
+
+        const tokens = fila.map(it => it.str.trim()).filter(Boolean);
+        const nums = tokens.filter(t => /^\d[\d\.]*,\d+$/.test(t));
+        const grandes = nums.filter(t => t.split(',')[0].length >= 5);
+
+        // Debug: guardar líneas que tienen "441" o "548" para identificar el problema
+        if (tokens.join(' ').includes('441') || tokens.join(' ').includes('548')) {
+            debug.push('tokens: ' + JSON.stringify(tokens));
+            debug.push('grandes: ' + JSON.stringify(grandes));
         }
 
-        // Estructura esperada (ignorando el $):
-        // [precio, surtidor_num, inicial, FINAL, manual, lts, importe]
-        // índices en nums (sin el $):
-        //   0 = precio (ej: 2045,0000)
-        //   1 = nro surtidor (ej: 02)
-        //   2 = inicial
-        //   3 = FINAL  ← queremos este
-        //   4 = manual
-        //   5 = lts
-        //   6 = importe
-        if (nums.length >= 7) {
-            vals.push(nums[3]);
+        if (grandes.length >= 2) {
+            vals.push(grandes[1]);
+        } else if (grandes.length === 1) {
+            vals.push(grandes[0]);
         }
     }
+
+    if (debug.length) vals.unshift('=== DEBUG ===\n' + debug.join('\n') + '\n=============');
     return vals;
 }
 
