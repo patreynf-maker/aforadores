@@ -439,70 +439,84 @@ function extractFinal(items) {
     const xMin = Math.min(...dolarItems.map(it => it.transform[4]));
     const dolarSurtidores = dolarItems.filter(it => it.transform[4] < xMin + 10);
 
-    // Primero, calibrar la X de las columnas Inicial y Final
-    // usando una línea donde sabemos que hay despacho (inicial != final)
-    // La columna Inicial y Final están siempre en la misma X relativa al $
-    // Vamos a detectar esas X automáticamente buscando líneas con 2+ números grandes distintos
-
-    // Recopilar todos los números grandes por X relativa al $
-    const xRelMap = new Map(); // xRel -> [valores]
+    // Calibrar X de columnas Inicial y Final
+    // Recopilar todas las X relativas de números de odómetro (5+ dígitos, 2 decimales)
+    const xRelCounts = new Map();
 
     for (const dolar of dolarSurtidores) {
         const yRef = dolar.transform[5];
         const xRef = dolar.transform[4];
 
-        const fila = items
-            .filter(it => Math.abs(it.transform[5] - yRef) <= 4
-                       && it.transform[4] >= xRef
-                       && it.transform[4] <= xRef + 480)
-            .sort((a, b) => a.transform[4] - b.transform[4]);
+        const fila = items.filter(it =>
+            Math.abs(it.transform[5] - yRef) <= 4 &&
+            it.transform[4] >= xRef &&
+            it.transform[4] <= xRef + 480
+        );
 
         for (const it of fila) {
             const txt = it.str.trim();
-            if (!/^\d{5,},\d{2}$/.test(txt)) continue; // solo odómetros: 5+ dígitos, exactamente 2 decimales
+            if (!/^\d{5,},\d{2}$/.test(txt)) continue;
             const xRel = Math.round(it.transform[4] - xRef);
-            if (!xRelMap.has(xRel)) xRelMap.set(xRel, 0);
-            xRelMap.set(xRel, xRelMap.get(xRel) + 1);
+            xRelCounts.set(xRel, (xRelCounts.get(xRel) || 0) + 1);
         }
     }
 
-    // Las dos X relativas más frecuentes son Inicial y Final
-    const xRels = [...xRelMap.entries()].sort((a, b) => a[0] - b[0]);
-    // Tomar solo las que aparecen en al menos la mitad de las filas
-    const threshold = dolarSurtidores.length * 0.3;
-    const xCols = xRels.filter(([x, count]) => count >= threshold).map(([x]) => x);
+    // Agrupar X cercanas (±6px) para manejar pequeñas variaciones
+    const grupos = [];
+    const xRelSorted = [...xRelCounts.entries()].sort((a, b) => a[0] - b[0]);
 
-    // xCols[0] = X relativa de Inicial, xCols[1] = X relativa de Final
-    if (xCols.length < 2) {
-        // Fallback: tomar las dos X más comunes
-        const top2 = xRels.sort((a, b) => b[1] - a[1]).slice(0, 2).sort((a, b) => a[0] - b[0]);
-        xCols.push(...top2.map(([x]) => x));
+    for (const [x, cnt] of xRelSorted) {
+        const grupo = grupos.find(g => Math.abs(g.x - x) <= 6);
+        if (grupo) {
+            grupo.count += cnt;
+            grupo.x = Math.round((grupo.x + x) / 2); // centrar
+        } else {
+            grupos.push({ x, count: cnt });
+        }
     }
 
-    const xFinalRef = xCols[1]; // X relativa de la columna Final
-    const tolerance = 8; // tolerancia en px
+    // Ordenar por X y tomar los dos más frecuentes (Inicial y Final)
+    const top = grupos.sort((a, b) => b.count - a.count).slice(0, 2).sort((a, b) => a.x - b.x);
+
+    if (top.length < 2) return [];
+
+    const xInicialRef = top[0].x;
+    const xFinalRef   = top[1].x;
+    const tol = 10;
 
     const vals = [];
     for (const dolar of dolarSurtidores) {
         const yRef = dolar.transform[5];
         const xRef = dolar.transform[4];
 
-        // Buscar el token en la X de la columna Final (±tolerance px)
-        const candidatos = items.filter(it => {
-            const xRel = it.transform[4] - xRef;
-            return Math.abs(it.transform[5] - yRef) <= 4
-                && Math.abs(xRel - xFinalRef) <= tolerance;
-        });
+        // Buscar token en la X de columna Final
+        let candidatoFinal = items
+            .filter(it =>
+                Math.abs(it.transform[5] - yRef) <= 4 &&
+                Math.abs((it.transform[4] - xRef) - xFinalRef) <= tol &&
+                /^\d{5,},\d{2}$/.test(it.str.trim())
+            )
+            .sort((a, b) =>
+                Math.abs(a.transform[4] - xRef - xFinalRef) -
+                Math.abs(b.transform[4] - xRef - xFinalRef)
+            )[0];
 
-        if (candidatos.length > 0) {
-            // Tomar el más cercano a xFinalRef
-            candidatos.sort((a, b) =>
-                Math.abs(a.transform[4] - xRef - xFinalRef) - Math.abs(b.transform[4] - xRef - xFinalRef)
-            );
-            const val = candidatos[0].str.trim();
-            if (/^\d{5,},\d{2}$/.test(val)) {
-                vals.push(val);
-            }
+        if (candidatoFinal) {
+            vals.push(candidatoFinal.str.trim());
+        } else {
+            // Si no hay Final distinto, buscar en columna Inicial (inicial=final)
+            const candidatoInicial = items
+                .filter(it =>
+                    Math.abs(it.transform[5] - yRef) <= 4 &&
+                    Math.abs((it.transform[4] - xRef) - xInicialRef) <= tol &&
+                    /^\d{5,},\d{2}$/.test(it.str.trim())
+                )
+                .sort((a, b) =>
+                    Math.abs(a.transform[4] - xRef - xInicialRef) -
+                    Math.abs(b.transform[4] - xRef - xInicialRef)
+                )[0];
+
+            if (candidatoInicial) vals.push(candidatoInicial.str.trim());
         }
     }
 
