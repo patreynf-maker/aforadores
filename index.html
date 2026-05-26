@@ -7,97 +7,43 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            min-height: 100vh; padding: 20px;
         }
+        .main-container { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; align-items: stretch; }
+        .panel { flex: 1; background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 30px; display: flex; flex-direction: column; }
+        h1 { color: #333; margin-bottom: 14px; font-size: 22px; }
 
-        .main-container {
-            display: flex;
-            gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
-            align-items: stretch;
+        /* Selector EESS */
+        .eess-selector { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .btn-eess {
+            flex: 1; padding: 8px 4px; border: 2px solid #667eea; border-radius: 8px;
+            background: white; color: #667eea; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
         }
+        .btn-eess:hover { background: #f0f1ff; }
+        .btn-eess.active { background: #667eea; color: white; }
 
-        .panel {
-            flex: 1;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        h1 { color: #333; margin-bottom: 20px; font-size: 22px; }
-
-        /* ── Tabla manual ── */
-        .scroll-wrapper {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 14px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-        }
-
+        /* Tabla */
+        .scroll-wrapper { flex: 1; overflow-y: auto; margin-bottom: 14px; border: 1px solid #e9ecef; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-        thead {
-            background: #667eea;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 5;
-        }
-
+        thead { background: #667eea; color: white; position: sticky; top: 0; z-index: 5; }
         th { padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
         tbody tr:nth-child(even) { background: #f8f9fa; }
         tbody tr:hover { background: #e8eaff; }
         td { padding: 4px 8px; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
-
-        td.name-cell {
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-            color: #495057;
-            min-width: 80px;
-        }
-
+        td.name-cell { font-weight: 600; font-family: 'Courier New', monospace; color: #495057; min-width: 80px; }
         td.diff-cell { font-family: 'Courier New', monospace; font-size: 12px; color: #888; min-width: 70px; }
         td.diff-cell.positive { color: #28a745; font-weight: 600; }
         td.diff-cell.negative { color: #dc3545; font-weight: 600; }
+        td input { width: 90px; padding: 5px 6px; border: 1px solid #ced4da; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; }
+        td input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.15); }
 
-        td input {
-            width: 90px;
-            padding: 5px 6px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-        }
-        td input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102,126,234,0.15);
-        }
-
-        /* ── Botones ── */
+        /* Botones */
         .actions { display: flex; gap: 10px; }
-
-        .btn {
-            flex: 1;
-            padding: 11px 0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-            color: white;
-        }
+        .btn { flex: 1; padding: 11px 0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; color: white; }
         .btn-blue  { background: #667eea; }
         .btn-green { background: #28a745; }
         .btn-red   { background: #dc3545; }
@@ -105,64 +51,24 @@
         .btn:active { transform: translateY(0); }
         .btn.copied { background: #10b981 !important; }
 
-        /* ── PDF panel ── */
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 12px;
-            padding: 36px;
-            text-align: center;
-            cursor: pointer;
-            background: #f8f9ff;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
+        /* PDF */
+        .upload-area { border: 3px dashed #667eea; border-radius: 12px; padding: 36px; text-align: center; cursor: pointer; background: #f8f9ff; transition: all 0.3s; margin-bottom: 20px; }
         .upload-area:hover, .upload-area.dragging { border-color: #764ba2; background: #f0f1ff; }
         .upload-icon { font-size: 44px; margin-bottom: 10px; }
         .upload-text { color: #333; font-size: 15px; }
         .upload-hint { color: #999; font-size: 12px; margin-top: 4px; }
-
         #fileInput { display: none; }
-
         .results { display: none; flex: 1; flex-direction: column; }
         .results.visible { display: flex; }
-
-        .output-box {
-            flex: 1;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.7;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin-bottom: 8px;
-        }
-
+        .output-box { flex: 1; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
         .count { color: #888; font-size: 12px; font-style: italic; margin-bottom: 14px; }
-
-        .error {
-            background: #fee; border: 1px solid #fcc; color: #c33;
-            padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none;
-        }
+        .error { background: #fee; border: 1px solid #fcc; color: #c33; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; }
         .error.visible { display: block; }
-
         .loading { display: none; text-align: center; padding: 20px 0; }
         .loading.visible { display: block; }
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 38px; height: 38px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 8px;
-        }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 38px; height: 38px; animation: spin 1s linear infinite; margin: 0 auto 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 1100px) {
-            .main-container { flex-direction: column; }
-        }
+        @media (max-width: 1100px) { .main-container { flex-direction: column; } }
     </style>
 </head>
 <body>
@@ -171,16 +77,15 @@
     <!-- PANEL IZQUIERDO: Surtidores Manuales -->
     <div class="panel">
         <h1>📋 Surtidores Manuales</h1>
+        <div class="eess-selector">
+            <button class="btn-eess active" data-eess="QQN544">QQN 544</button>
+            <button class="btn-eess" data-eess="BOUCHARD">BOUCHARD</button>
+            <button class="btn-eess" data-eess="CR88">CR 88</button>
+            <button class="btn-eess" data-eess="VILLAREGINA">VILLA REGINA</button>
+        </div>
         <div class="scroll-wrapper">
             <table>
-                <thead>
-                    <tr>
-                        <th>Surtidor</th>
-                        <th>Inicial</th>
-                        <th>Final</th>
-                        <th>Dif</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Surtidor</th><th>Inicial</th><th>Final</th><th>Dif</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
@@ -200,77 +105,158 @@
             <div class="upload-hint">Planillas de playa YPF</div>
         </div>
         <input type="file" id="fileInput" accept=".pdf">
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div>Procesando PDF…</div>
-        </div>
-
+        <div class="loading" id="loading"><div class="spinner"></div><div>Procesando PDF…</div></div>
         <div class="error" id="error"></div>
-
         <div class="results" id="results">
             <div class="output-box" id="output"></div>
             <div class="count" id="count"></div>
-            <div class="actions">
-                <button class="btn btn-blue" id="btnCopy">📋 Copiar</button>
-            </div>
+            <div class="actions"><button class="btn btn-blue" id="btnCopy">📋 Copiar</button></div>
         </div>
     </div>
 
 </div>
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ══ SURTIDORES MANUALES ══
+// ══════════════════════════════════════════════
+//  DEFINICIÓN DE EESS
+// ══════════════════════════════════════════════
 
-const DESORDENADOS = [
-    '2INF1','1SUPER1','4INF D1','3D5001',
-    '2INF2','1SUPER2','4INF D2','3D5002',
-    '2INF3','1SUPER3','4INF D3','3D5003',
-    '2INF4','1SUPER4','4INF D4','3D5004',
-    '2INF5','1SUPER5','4INF D5','3D5005',
-    '2INF6','1SUPER6','4INF D6','3D5006',
-    '2INF7','1SUPER7','4INF D7','3D5007',
-    '2INF8','1SUPER8','4INF D8','3D5008',
-    '4INF9','3D5009'
-];
+const EESS = {
+    QQN544: {
+        desordenados: [
+            '2INF1','1SUPER1','4INF D1','3D5001',
+            '2INF2','1SUPER2','4INF D2','3D5002',
+            '2INF3','1SUPER3','4INF D3','3D5003',
+            '2INF4','1SUPER4','4INF D4','3D5004',
+            '2INF5','1SUPER5','4INF D5','3D5005',
+            '2INF6','1SUPER6','4INF D6','3D5006',
+            '2INF7','1SUPER7','4INF D7','3D5007',
+            '2INF8','1SUPER8','4INF D8','3D5008',
+            '4INF9','3D5009'
+        ],
+        ordenados: [
+            '1SUPER1','1SUPER2','1SUPER3','1SUPER4','1SUPER5','1SUPER6','1SUPER7','1SUPER8',
+            '2INF1','2INF2','2INF3','2INF4','2INF5','2INF6','2INF7','2INF8',
+            '3D5001','3D5002','3D5003','3D5004','3D5005','3D5006','3D5007','3D5008','3D5009',
+            '4INF D1','4INF D2','4INF D3','4INF D4','4INF D5','4INF D6','4INF D7','4INF D8',
+            '4INF9'
+        ]
+    },
+    BOUCHARD: {
+        desordenados: [
+            'inf 1a','sup 2a','inf d 3a','d500 4a',
+            'inf 1b','sup 2b','inf d 3b','d500 4b',
+            'inf 1c','sup 2c','inf d 3c','d500 4c',
+            'inf 1d','sup 2d','inf d 3d','d500 4d',
+            'inf 5a','sup 5b','inf d 5c','d500 5d',
+            'inf 6a','sup 6b','inf d 6c','d500 6d',
+            'inf 7a','sup 7b','inf d 7c','d500 i7d',
+            'inf 8a','sup 8b','inf d 8c','d500 8d'
+        ],
+        ordenados: [
+            'sup 2a','sup 2b','sup 5b','sup 6b','sup 7b','sup 8b','sup 2c','sup 2d',
+            'inf 1a','inf 1b','inf 1c','inf 1d','inf 5a','inf 6a','inf 7a','inf 8a',
+            'd500 4a','d500 4b','d500 4c','d500 4d','d500 5d','d500 6d','d500 i7d','d500 8d',
+            'inf d 3a','inf d 3b','inf d 3c','inf d 3d','inf d 5c','inf d 6c','inf d 7c','inf d 8c'
+        ]
+    },
+    CR88: {
+        desordenados: [
+            'inf a1','sup a2','inf d a3','d500 a4',
+            'inf a5','sup a6','inf d a7','d500 a8',
+            'inf b1','sup b2','inf d b3','d500 b4',
+            'inf b5','sup b6','inf d b7','d500 b8',
+            'inf c1','sup c2','inf d c3','d500 c4',
+            'inf c5','sup c6','inf d c7','d500 c8',
+            'inf d1','sup d2','inf d d3','d500 d4',
+            'inf d5','sup d6','inf d d7','d500 d8',
+            'inf f e33','d500 e34','inf f e35','d500 e36'
+        ],
+        ordenados: [
+            'sup a2','sup a6','sup b2','sup b6','sup c2','sup c6','sup d2','sup d6',
+            'inf a1','inf a5','inf b1','inf b5','inf c1','inf c5','inf d1','inf d5',
+            'd500 a4','d500 a8','d500 b4','d500 b8','d500 c4','d500 c8','d500 d4','d500 d8','d500 e34','d500 e36',
+            'inf d a3','inf d a7','inf d b3','inf d b7','inf d c3','inf d c7','inf d d3','inf d d7','inf f e33','inf f e35'
+        ]
+    },
+    VILLAREGINA: {
+        desordenados: [
+            'inf c1','sup c2','ind f c3','d500 c4',
+            'inf c5','sup c6','inf d c7','d500 c8',
+            'inf d1','sup d2','ind f d3','d500 d4',
+            'inf d5','sup d6','inf d d7','d500 d8',
+            'inf 9a','sup 9b','inf d 9c','d500 9d',
+            'inf 10a','sup 10b','inf d 10c','d500 10d',
+            'inf a1','sup a2','inf d a3','d500 a4',
+            'inf a5','sup a6','inf d a7','d500 a8',
+            'inf b1','sup b2','inf d b3','d500 b4',
+            'inf b5','sup b6','inf d b7','d500 b8'
+        ],
+        ordenados: [
+            'sup c2','sup c6','sup d2','sup d6','sup 9b','sup 10b','sup a2','sup a6','sup b2','sup b6',
+            'inf c1','inf c5','inf d1','inf d5','inf 9a','inf 10a','inf a1','inf a5','inf b1','inf b5',
+            'd500 c4','d500 c8','d500 d4','d500 d8','d500 9d','d500 10d','d500 a4','d500 a8','d500 b4','d500 b8',
+            'ind f c3','inf d c7','ind f d3','inf d d7','inf d 9c','inf d 10c','inf d a3','inf d a7','inf d b3','inf d b7'
+        ]
+    }
+};
 
-const ORDENADOS = [
-    '1SUPER1','1SUPER2','1SUPER3','1SUPER4','1SUPER5','1SUPER6','1SUPER7','1SUPER8',
-    '2INF1','2INF2','2INF3','2INF4','2INF5','2INF6','2INF7','2INF8',
-    '3D5001','3D5002','3D5003','3D5004','3D5005','3D5006','3D5007','3D5008','3D5009',
-    '4INF D1','4INF D2','4INF D3','4INF D4','4INF D5','4INF D6','4INF D7','4INF D8',
-    '4INF9'
-];
+// ══════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════
 
+let eessActual = 'QQN544';
+let isOrdered  = false;
+// datos: { [eess]: { [surtidor]: {inicial, final} } }
 const datos = {};
-DESORDENADOS.forEach(s => { datos[s] = { inicial: '', final: '' }; });
-let isOrdered = false;
+Object.keys(EESS).forEach(e => {
+    datos[e] = {};
+    EESS[e].desordenados.forEach(s => { datos[e][s] = { inicial: '', final: '' }; });
+});
+
+// ══════════════════════════════════════════════
+//  DOM
+// ══════════════════════════════════════════════
 
 const tableBody    = document.getElementById('tableBody');
 const btnOrder     = document.getElementById('btnOrder');
 const btnCopyTable = document.getElementById('btnCopyTable');
 const btnClear     = document.getElementById('btnClear');
 
+// Selector EESS
+document.querySelectorAll('.btn-eess').forEach(btn => {
+    btn.addEventListener('click', () => {
+        saveFromDOM();
+        document.querySelectorAll('.btn-eess').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        eessActual = btn.dataset.eess;
+        isOrdered  = false;
+        btnOrder.textContent = '🔄 Ordenar';
+        renderTable();
+    });
+});
+
 function saveFromDOM() {
     document.querySelectorAll('tr[data-key]').forEach(row => {
         const key = row.dataset.key;
-        datos[key].inicial = row.querySelector('.inp-ini').value;
-        datos[key].final   = row.querySelector('.inp-fin').value;
+        if (datos[eessActual][key] !== undefined) {
+            datos[eessActual][key].inicial = row.querySelector('.inp-ini').value;
+            datos[eessActual][key].final   = row.querySelector('.inp-fin').value;
+        }
     });
 }
 
 function renderTable() {
-    const order = isOrdered ? ORDENADOS : DESORDENADOS;
+    const cfg   = EESS[eessActual];
+    const order = isOrdered ? cfg.ordenados : cfg.desordenados;
     tableBody.innerHTML = '';
 
     order.forEach(surtidor => {
-        const d = datos[surtidor] || { inicial: '', final: '' };
+        const d = datos[eessActual][surtidor] || { inicial: '', final: '' };
         const ini  = parseFloat(d.inicial.replace(',','.')) || 0;
         const fin  = parseFloat(d.final.replace(',','.'))   || 0;
         const diff = (d.inicial || d.final) ? (fin - ini) : null;
-
         let diffText = '', diffClass = 'diff-cell';
         if (diff !== null) {
             diffText = diff.toFixed(2);
@@ -300,10 +286,8 @@ function renderTable() {
         tdDiff.className = diffClass;
         tdDiff.textContent = diffText;
 
-        tr.appendChild(tdName);
-        tr.appendChild(tdIni);
-        tr.appendChild(tdFin);
-        tr.appendChild(tdDiff);
+        tr.appendChild(tdName); tr.appendChild(tdIni);
+        tr.appendChild(tdFin);  tr.appendChild(tdDiff);
         tableBody.appendChild(tr);
     });
 
@@ -316,19 +300,17 @@ function addListeners() {
         inp.addEventListener('input', () => {
             const row = inp.closest('tr');
             const key = row.dataset.key;
-            datos[key].inicial = row.querySelector('.inp-ini').value;
-            datos[key].final   = row.querySelector('.inp-fin').value;
-            const ini  = parseFloat(datos[key].inicial.replace(',','.')) || 0;
-            const fin  = parseFloat(datos[key].final.replace(',','.'))   || 0;
-            const diff = (datos[key].inicial || datos[key].final) ? (fin - ini) : null;
+            datos[eessActual][key].inicial = row.querySelector('.inp-ini').value;
+            datos[eessActual][key].final   = row.querySelector('.inp-fin').value;
+            const ini  = parseFloat(datos[eessActual][key].inicial.replace(',','.')) || 0;
+            const fin  = parseFloat(datos[eessActual][key].final.replace(',','.'))   || 0;
+            const diff = (datos[eessActual][key].inicial || datos[eessActual][key].final) ? (fin - ini) : null;
             const cell = row.querySelector('td:last-child');
             cell.className = 'diff-cell';
             if (diff !== null) {
                 cell.textContent = diff.toFixed(2);
                 cell.classList.add(diff > 0 ? 'positive' : diff < 0 ? 'negative' : '');
-            } else {
-                cell.textContent = '';
-            }
+            } else { cell.textContent = ''; }
         });
         inp.addEventListener('keydown', e => {
             if (e.key !== 'Enter') return;
@@ -347,12 +329,13 @@ btnOrder.addEventListener('click', () => {
 
 btnCopyTable.addEventListener('click', () => {
     saveFromDOM();
-    const order = isOrdered ? ORDENADOS : DESORDENADOS;
-    const hayInicial = order.some(s => datos[s].inicial.trim() !== '');
-    const hayFinal   = order.some(s => datos[s].final.trim()   !== '');
+    const cfg   = EESS[eessActual];
+    const order = isOrdered ? cfg.ordenados : cfg.desordenados;
+    const hayInicial = order.some(s => datos[eessActual][s]?.inicial.trim() !== '');
+    const hayFinal   = order.some(s => datos[eessActual][s]?.final.trim()   !== '');
     const lines = order.map(s => {
-        const ini = datos[s].inicial.trim();
-        const fin = datos[s].final.trim();
+        const ini = datos[eessActual][s]?.inicial.trim() || '';
+        const fin = datos[eessActual][s]?.final.trim()   || '';
         if (hayInicial && hayFinal) return `${ini||'0'}\t${fin||'0'}`;
         if (hayInicial) return ini || '0';
         if (hayFinal)   return fin || '0';
@@ -367,7 +350,7 @@ btnCopyTable.addEventListener('click', () => {
 
 btnClear.addEventListener('click', () => {
     if (!confirm('¿Limpiar todos los campos?')) return;
-    DESORDENADOS.forEach(s => { datos[s] = { inicial: '', final: '' }; });
+    EESS[eessActual].desordenados.forEach(s => { datos[eessActual][s] = { inicial: '', final: '' }; });
     isOrdered = false;
     btnOrder.textContent = '🔄 Ordenar';
     renderTable();
@@ -375,7 +358,9 @@ btnClear.addEventListener('click', () => {
 
 renderTable();
 
-// ══ SURTIDORES AUTOMÁTICOS (PDF) ══
+// ══════════════════════════════════════════════
+//  SURTIDORES AUTOMÁTICOS (PDF)
+// ══════════════════════════════════════════════
 
 const uploadArea = document.getElementById('uploadArea');
 const fileInput  = document.getElementById('fileInput');
@@ -390,8 +375,7 @@ uploadArea.addEventListener('click', () => fileInput.click());
 uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragging'); });
 uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragging'));
 uploadArea.addEventListener('drop', e => {
-    e.preventDefault();
-    uploadArea.classList.remove('dragging');
+    e.preventDefault(); uploadArea.classList.remove('dragging');
     const f = e.dataTransfer.files[0];
     if (f && f.type === 'application/pdf') processFile(f);
     else showError('Por favor, selecciona un archivo PDF válido.');
@@ -435,24 +419,18 @@ async function processFile(file) {
 function extractFinal(items) {
     const dolarItems = items.filter(it => it.str.trim() === '$');
     if (!dolarItems.length) return [];
-
     const xMin = Math.min(...dolarItems.map(it => it.transform[4]));
     const dolarSurtidores = dolarItems.filter(it => it.transform[4] < xMin + 10);
 
     // Calibrar X de columnas Inicial y Final
-    // Recopilar todas las X relativas de números de odómetro (5+ dígitos, 2 decimales)
     const xRelCounts = new Map();
-
     for (const dolar of dolarSurtidores) {
         const yRef = dolar.transform[5];
         const xRef = dolar.transform[4];
-
         const fila = items.filter(it =>
             Math.abs(it.transform[5] - yRef) <= 4 &&
-            it.transform[4] >= xRef &&
-            it.transform[4] <= xRef + 480
+            it.transform[4] >= xRef && it.transform[4] <= xRef + 480
         );
-
         for (const it of fila) {
             const txt = it.str.trim();
             if (!/^\d{5,},\d{2}$/.test(txt)) continue;
@@ -461,23 +439,14 @@ function extractFinal(items) {
         }
     }
 
-    // Agrupar X cercanas (±6px) para manejar pequeñas variaciones
+    // Agrupar X cercanas (±6px)
     const grupos = [];
-    const xRelSorted = [...xRelCounts.entries()].sort((a, b) => a[0] - b[0]);
-
-    for (const [x, cnt] of xRelSorted) {
-        const grupo = grupos.find(g => Math.abs(g.x - x) <= 6);
-        if (grupo) {
-            grupo.count += cnt;
-            grupo.x = Math.round((grupo.x + x) / 2); // centrar
-        } else {
-            grupos.push({ x, count: cnt });
-        }
+    for (const [x, cnt] of [...xRelCounts.entries()].sort((a,b) => a[0]-b[0])) {
+        const g = grupos.find(g => Math.abs(g.x - x) <= 6);
+        if (g) { g.count += cnt; g.x = Math.round((g.x + x) / 2); }
+        else grupos.push({ x, count: cnt });
     }
-
-    // Ordenar por X y tomar los dos más frecuentes (Inicial y Final)
-    const top = grupos.sort((a, b) => b.count - a.count).slice(0, 2).sort((a, b) => a.x - b.x);
-
+    const top = grupos.sort((a,b) => b.count - a.count).slice(0,2).sort((a,b) => a.x - b.x);
     if (top.length < 2) return [];
 
     const xInicialRef = top[0].x;
@@ -489,37 +458,27 @@ function extractFinal(items) {
         const yRef = dolar.transform[5];
         const xRef = dolar.transform[4];
 
-        // Buscar token en la X de columna Final
-        let candidatoFinal = items
+        const candidatoFinal = items
             .filter(it =>
                 Math.abs(it.transform[5] - yRef) <= 4 &&
                 Math.abs((it.transform[4] - xRef) - xFinalRef) <= tol &&
                 /^\d{5,},\d{2}$/.test(it.str.trim())
             )
-            .sort((a, b) =>
-                Math.abs(a.transform[4] - xRef - xFinalRef) -
-                Math.abs(b.transform[4] - xRef - xFinalRef)
-            )[0];
+            .sort((a,b) => Math.abs(a.transform[4]-xRef-xFinalRef) - Math.abs(b.transform[4]-xRef-xFinalRef))[0];
 
         if (candidatoFinal) {
             vals.push(candidatoFinal.str.trim());
         } else {
-            // Si no hay Final distinto, buscar en columna Inicial (inicial=final)
             const candidatoInicial = items
                 .filter(it =>
                     Math.abs(it.transform[5] - yRef) <= 4 &&
                     Math.abs((it.transform[4] - xRef) - xInicialRef) <= tol &&
                     /^\d{5,},\d{2}$/.test(it.str.trim())
                 )
-                .sort((a, b) =>
-                    Math.abs(a.transform[4] - xRef - xInicialRef) -
-                    Math.abs(b.transform[4] - xRef - xInicialRef)
-                )[0];
-
+                .sort((a,b) => Math.abs(a.transform[4]-xRef-xInicialRef) - Math.abs(b.transform[4]-xRef-xInicialRef))[0];
             if (candidatoInicial) vals.push(candidatoInicial.str.trim());
         }
     }
-
     return vals;
 }
 
