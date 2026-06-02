@@ -422,6 +422,9 @@ function extractFinal(items) {
     const xMin = Math.min(...dolarItems.map(it => it.transform[4]));
     const dolarSurtidores = dolarItems.filter(it => it.transform[4] < xMin + 10);
 
+    // Odómetros: 4+ dígitos antes de la coma, exactamente 2 decimales
+    const esOdometro = txt => /^\d{4,},\d{2}$/.test(txt);
+
     // Calibrar X de columnas Inicial y Final
     const xRelCounts = new Map();
     for (const dolar of dolarSurtidores) {
@@ -432,8 +435,7 @@ function extractFinal(items) {
             it.transform[4] >= xRef && it.transform[4] <= xRef + 480
         );
         for (const it of fila) {
-            const txt = it.str.trim();
-            if (!/^\d{5,},\d{2}$/.test(txt)) continue;
+            if (!esOdometro(it.str.trim())) continue;
             const xRel = Math.round(it.transform[4] - xRef);
             xRelCounts.set(xRel, (xRelCounts.get(xRel) || 0) + 1);
         }
@@ -462,7 +464,7 @@ function extractFinal(items) {
             .filter(it =>
                 Math.abs(it.transform[5] - yRef) <= 4 &&
                 Math.abs((it.transform[4] - xRef) - xFinalRef) <= tol &&
-                /^\d{5,},\d{2}$/.test(it.str.trim())
+                esOdometro(it.str.trim())
             )
             .sort((a,b) => Math.abs(a.transform[4]-xRef-xFinalRef) - Math.abs(b.transform[4]-xRef-xFinalRef))[0];
 
@@ -473,7 +475,7 @@ function extractFinal(items) {
                 .filter(it =>
                     Math.abs(it.transform[5] - yRef) <= 4 &&
                     Math.abs((it.transform[4] - xRef) - xInicialRef) <= tol &&
-                    /^\d{5,},\d{2}$/.test(it.str.trim())
+                    esOdometro(it.str.trim())
                 )
                 .sort((a,b) => Math.abs(a.transform[4]-xRef-xInicialRef) - Math.abs(b.transform[4]-xRef-xInicialRef))[0];
             if (candidatoInicial) vals.push(candidatoInicial.str.trim());
